@@ -27,9 +27,13 @@ db = SQL("sqlite:///budget.db")
 @app.route("/")
 @login_required
 def index():
-    """Show transaction history"""
+    #Home page
+    user_id = session["user_id"]
 
-    return render_template("/index.html")
+    current_balance = db.execute("SELECT account_balance FROM users WHERE id = ?", user_id)[0]['account_balance']
+    print(current_balance)
+
+    return render_template("/index.html",current_balance=usd(current_balance))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
