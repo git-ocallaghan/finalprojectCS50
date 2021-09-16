@@ -1,12 +1,14 @@
-import sqlite3
+import os
+
 from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
 from flask import sessions
 from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from helpers import apology, login_required, usd
-import os
+
 #Flask configuration 
 app = Flask(__name__)
 
@@ -20,18 +22,40 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-code = os.urandom(24)
-app.secret_key = code
-
-
-
 db = SQL("sqlite:///budget.db")
 
 @app.route("/")
+@login_required
 def index():
     """Show transaction history"""
 
     return render_template("/index.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+#Log the user in 
+    session.clear()
+
+    if request.method == "POST":
+        
+        if not request.form.get("username"):
+            return apology("Please enter a valid username",403)
+        
+        elif not request.form.get("password"):
+            return apology("This is an incorrect password", 403)
+        
+        rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
+
+        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
+            return apology("Invalid username and/or password", 403)
+        
+        session["user_id"] = rows[0]["id"]
+
+        return redirect("/")
+    
+    else:
+        return render_template("login.html")
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -65,4 +89,15 @@ def register():
         
     else:
         return render_template("register.html")
+
+
+def errorhandler(e):
+    """Handle error"""
+    if not isinstance(e, HTTPException):
+        e = InternalServerError()
+    return apology(e.name, e.code)
+
+# Listen for errors
+for code in default_exceptions:
+    app.errorhandler(code)(errorhandler)
         
