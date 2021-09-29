@@ -95,6 +95,29 @@ def register():
         return render_template("register.html")
 
 
+@app.route("/balance", methods=["GET", "POST"])
+@login_required
+def balance():
+
+    user_id = session["user_id"]
+    if request.method == "POST":
+        deposit = float(request.form.get("deposit"))
+        
+        if not deposit: 
+            return error("Please enter the amount you wish to deposit")
+        
+        elif deposit <= 0:
+            return error("Minium deposit is $0.01")
+        
+        cash = db.execute("SELECT account_balance FROM users WHERE id = ?", user_id)[0]["account_balance"]
+        db.execute("UPDATE users SET account_balance = ? WHERE id = ?", cash + deposit, user_id)
+        
+        return redirect('/')
+
+    else:
+        return render_template("balance.html")
+
+
 def errorhandler(e):
     """Handle error"""
     if not isinstance(e, HTTPException):
