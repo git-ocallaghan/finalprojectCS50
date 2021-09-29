@@ -111,8 +111,8 @@ def balance():
         
         cash = db.execute("SELECT account_balance FROM users WHERE id = ?", user_id)[0]["account_balance"]
         db.execute("UPDATE users SET account_balance = ? WHERE id = ?", cash + deposit, user_id)
-        
-        return redirect('/')
+        balance = cash + deposit
+        return render_template('updated.html', balance=balance)
 
     else:
         return render_template("balance.html")
