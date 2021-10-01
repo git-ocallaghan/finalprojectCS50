@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Balance
+{% endblock %}
+
+{% block main %}
+<form action="/transactions" method="post">
+    <div class="form-group">
+        <select class="form-control" id="category" name="category">
+            <option value="" disabled selected hidden>Select a category</option>
+            <option value="groceries">Groceries</option>
+            <option value="enterainment">Entertainment</option>
+            <option value="transportation">Transportation</option>
+            <option value="vehicle">Vehicle</option>
+            <option value="utilities">Utilities</option>
+            <option value="taxes">Taxes</option>
+            <option value="education">Education</option>
+            <option value="healthcare">Healthcare</option>
+            <option value="insurance">Insurance</option>
+            <option value="miscellaneous">Miscellaneous</option>
+        </select>
+        <input class="form-control" name="merchant" placeholder="Business Name" type="text">
+        <input class="form-control" name="amount" placeholder="Amount" type="Number">
+    </div>
+    <button class="btn btn-primary" type="submit">Update</button>
+</form>
+{% endblock %}

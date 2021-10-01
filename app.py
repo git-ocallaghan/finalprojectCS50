@@ -1,4 +1,6 @@
+
 import os
+import pandas as pd
 
 from cs50 import SQL
 from flask import Flask, flash, redirect, render_template, request, session
@@ -7,7 +9,11 @@ from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
+from werkzeug.utils import secure_filename
 from helpers import apology, login_required, usd
+
+UPLOAD_FOLDER = '/path/to/the/uploads'
+ALLOWED_EXTENSIONS = {'xlsx', 'xlsm', 'xlsb', 'xls', 'csv'}
 
 #Flask configuration 
 app = Flask(__name__)
@@ -20,6 +26,7 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config["SESSION_FILE_DIR"] = mkdtemp()
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 Session(app)
 
 db = SQL("sqlite:///budget.db")
@@ -104,10 +111,10 @@ def balance():
         deposit = float(request.form.get("deposit"))
         
         if not deposit: 
-            return error("Please enter the amount you wish to deposit")
+            return apology("Please enter the amount you wish to deposit")
         
         elif deposit <= 0:
-            return error("Minium deposit is $0.01")
+            return apology("Minium deposit is $0.01")
         
         cash = db.execute("SELECT account_balance FROM users WHERE id = ?", user_id)[0]["account_balance"]
         db.execute("UPDATE users SET account_balance = ? WHERE id = ?", cash + deposit, user_id)
@@ -117,6 +124,26 @@ def balance():
     else:
         return render_template("balance.html")
 
+@app.route("/transactions", methods=["GET", "POST"])
+@login_required
+def transactions():
+    
+    user_id = session["user_id"]
+    if request.method == "POST":
+        category = request.form.get("category")
+        merchant = request.form.get("merchant")
+        amount = float(request.form.get("amount"))
+
+        db.execute("INSERT INTO transactions (user_id, category, merchant, amount) VALUES(?, ?, ?, ?)", user_id, category,
+         merchant, amount)
+         
+        return render_template("updated.html")
+    
+    else:
+        return render_template("transactions.html")
+
+def error():
+    return render_template('apology.html')
 
 def errorhandler(e):
     """Handle error"""
